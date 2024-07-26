@@ -35,16 +35,6 @@ on:
         required: false
         type: string
         default: ./website/
-      packageManager:
-        description: Package Manager
-        required: false
-        type: string
-        default: yarn
-      packageManagerVersion:
-        description: Package manager version
-        required: false
-        type: string
-        default: ''
       setupEnvWorkingDirectory:
         description: workingDirectory for `setup-env` action
         required: false
@@ -64,23 +54,22 @@ jobs:
         run: git fetch origin ${{ github.base_ref }}
 
       - name: Setup env
-        uses: the-guild-org/shared-config/setup@main
+        id: env
+        uses: the-guild-org/shared-config/setup@v1
         with:
-          nodeVersion: ${{inputs.nodeVersion}}
-          packageManager: ${{inputs.packageManager}}
-          packageManagerVersion: ${{inputs.packageManagerVersion}}
-          workingDirectory: ${{ inputs.setupEnvWorkingDirectory }}
+          node-version: ${{ inputs.nodeVersion }}
+          working-directory: ${{ inputs.setupEnvWorkingDirectory }}
 
       - name: Algolia generate
-        if: inputs.packageManager != 'pnpm'
+        if: steps.env.outputs.package-manager != 'pnpm'
         run:
-          ${{ inputs.packageManager }} run theguild-nextra-algolia -o ${{ inputs.lockFilePath }}
+          ${{ steps.env.outputs.package-manager }} run theguild-nextra-algolia -o ${{ inputs.lockFilePath }}
           --source '${{ inputs.source }}' --domain ${{ inputs.domain }} --docsBaseDir ${{
           inputs.docsBaseDir }}
         working-directory: ${{ inputs.websiteDirectory }}
 
       - name: Algolia generate
-        if: inputs.packageManager == 'pnpm'
+        if: steps.env.outputs.package-manager == 'pnpm'
         run:
           pnpm --filter ${{ inputs.websiteDirectory }} run theguild-nextra-algolia -o ${{
           inputs.lockFilePath }} --source '${{ inputs.source }}' --domain ${{ inputs.domain }}
