@@ -57,7 +57,7 @@ on:
 jobs:
   algolia-push-records:
     name: Push new records if changes
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout Repo
         uses: actions/checkout@v4
