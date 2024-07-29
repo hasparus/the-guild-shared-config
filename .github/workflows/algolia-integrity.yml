@@ -27,23 +27,29 @@ on:
         required: false
         default: ./src/pages/
         description: Relative path from `website/` to nextra markdown pages root folder
-      nodeVersion:
-        required: false
-        type: string
-        default: '18'
       websiteDirectory:
         required: false
         type: string
         default: ./website/
-      setupEnvWorkingDirectory:
-        description: workingDirectory for `setup-env` action
-        required: false
+
+      # must match setup/actions.yml
+      node-version:
         type: string
+        description: Node.js version to use.
+        required: false
+      node-version-file:
+        type: string
+        description: File containing the version to use.
+        required: false
+      setup-working-directory:
+        type: string
+        description: Working directory for the env setup.
+        required: false
         default: .
 
 jobs:
   algolia-records-check:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -53,12 +59,13 @@ jobs:
       - name: Fetch
         run: git fetch origin ${{ github.base_ref }}
 
-      - name: Setup env
+      - name: Set up env
         id: env
         uses: the-guild-org/shared-config/setup@v1
         with:
-          node-version: ${{ inputs.nodeVersion }}
-          working-directory: ${{ inputs.setupEnvWorkingDirectory }}
+          node-version: ${{ inputs.node-version }}
+          node-version-file: ${{ inputs.node-version-file }}
+          working-directory: ${{ inputs.setup-working-directory }}
 
       - name: Algolia generate
         if: steps.env.outputs.package-manager != 'pnpm'
@@ -74,7 +81,7 @@ jobs:
           pnpm --filter ${{ inputs.websiteDirectory }} run theguild-nextra-algolia -o ${{
           inputs.lockFilePath }} --source '${{ inputs.source }}' --domain ${{ inputs.domain }}
           --docsBaseDir ${{ inputs.docsBaseDir }}
-        working-directory: ${{ inputs.setupEnvWorkingDirectory }}
+        working-directory: ${{ inputs.setup-working-directory }}
 
       - name: Prettier
         run: npx prettier --write website/${{ inputs.lockFilePath }}
